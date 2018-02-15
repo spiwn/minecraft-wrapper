@@ -202,7 +202,8 @@ class Backups(object):
                             """
                 return
         # perform TAR backup
-        statuscode = os.system(" ".join(arguments))
+        proc = subprocess.Popen(" ".join(arguments), stdout=subprocess.DEVNULL, shell=True)
+        statuscode = proc.wait()
 
         # TODO add a wrapper properties config item to set save mode of server
         # restart saves, call finish Events
