@@ -204,7 +204,7 @@ class MCServer(object):
                     # break out to `while not self.wrapper.halt.halt:` loop
                     # to (possibly) connect to server again.
                     break
-
+                
                 # is is only reading server console output
                 for line in self.console_output_data:
                     try:
@@ -718,11 +718,11 @@ class MCServer(object):
                     "%s Since you are running Wrapper in OFFLINE mode, THIS "
                     "COULD BE SERIOUS!\n%s Wrapper is not handling any"
                     " authentication.\n%s This is only ok if this wrapper "
-                    "is not accessible from either port %s or port %s"
+                    "is not accessible from either port %s%s"
                     " (I.e., this wrapper is a multiworld for a hub server, or"
                     " you are doing your own authorization via a plugin)." % (
                         prefix, prefix, prefix,
-                        self.vitals.server_port, self.wrapper.proxy.proxy_port))
+                        self.vitals.server_port, "" if (self.wrapper.proxy == None) else self.wrapper.proxy.proxy_port))
             else:
                 message = (
                     "%s Since you are running Wrapper in proxy mode, this"
