@@ -11,6 +11,8 @@ import json
 import hashlib
 import argparse
 import subprocess
+import zipfile
+import re
 
 parser = argparse.ArgumentParser(
     description='Build script for Wrapper.py!',
@@ -47,8 +49,8 @@ def build_wrapper(buildargs):
         # build the docs
         build_the_docs()
 
-    with open("build/version.json", "r") as f:
-        version = json.loads(f.read())
+    with open("build/version.json", "rb") as f:
+        version = json.loads(f.read().decode("utf8"))
 
     if len(version["__version__"]) < 4:
         version["__version__"].append(buildargs.release)
@@ -69,15 +71,15 @@ def build_wrapper(buildargs):
                 "__branch__ = '%s'\n" %
                 (version["__version__"],
                  version["__branch__"]))
+    filebytes = filetext.encode("utf8")
+    with open("build/buildinfo.py", "wb") as f:
+        f.write(filebytes)
 
-    with open("build/buildinfo.py", "w") as f:
-        f.write(filetext)
+    with open("wrapper/core/buildinfo.py", "wb") as f:
+        f.write(filebytes)
 
-    with open("wrapper/core/buildinfo.py", "w") as f:
-        f.write(filetext)
-
-    with open("build/version.json", "w") as f:
-        f.write(json.dumps(version, indent=4, sort_keys=True))
+    with open("build/version.json", "wb") as f:
+        f.write(json.dumps(version, indent=4, sort_keys=True).encode("utf8"))
 
     if path.exists("Wrapper.py"):
         # Time to start with a clean Wrapper.py!
@@ -89,9 +91,22 @@ def build_wrapper(buildargs):
     print(path.curdir)
     system("ls")
     chdir("wrapper")
-    system("zip ../Wrapper.py -r . -x *~ /.git* *.pyc *__pycache__* *test.py")
-    chdir("..")
-    system("zip Wrapper.py LICENSE.txt")
+    vcsRe = re.compile("/\\.(git|hg)")
+    pyCacheRe = re.compile("/__pycache__")
+    with zipfile.ZipFile('../Wrapper.py', 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in walk(path.curdir):
+            if (vcsRe.search(root)):
+                continue
+            if (pyCacheRe.search(root)):
+                continue
+            for file in files:
+                if (file[-4:] == '.pyc'):
+                    continue
+                if (file[-7:] == 'test.py'):
+                    continue
+                zipf.write(path.join(root, file))
+        chdir("..")
+        zipf.write(path.join(path.curdir, "LICENSE.txt"))
 
     with open("./build/Wrapper.py.md5", "w") as f:
         f.write(hashlib.md5(open("./Wrapper.py", "rb").read()).hexdigest())
