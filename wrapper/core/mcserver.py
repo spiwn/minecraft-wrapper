@@ -24,6 +24,7 @@ import ctypes
 import platform
 import base64
 import copy
+import re
 
 try:
     import resource
@@ -184,8 +185,8 @@ class MCServer(object):
                 universal_newlines=True)
             self.wrapper.players = {}
             self.accepteula()  # Auto accept eula
-
-            if self.proc.poll() is None and trystart > 3:
+            
+            if self.proc.poll() is not None and trystart > 3:
                 self.log.error(
                     "Could not start server.  check your server.properties,"
                     " wrapper.properties and this your startup 'command'"
