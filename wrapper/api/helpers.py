@@ -673,10 +673,7 @@ def readout(commandtext, description, separator=" - ", pad=15, command_text_fg="
 
 
 def _secondstohuman(seconds):
-
-    divisor = seconds
-    if seconds < 1:
-        divisor = 1
+    divisor = 1
     unit = "seconds"
     if seconds > 59:
         unit = "minutes"
@@ -946,8 +943,9 @@ def _test():
     assert (isipv4address("honkin")) is False
     assert (isipv4address("www.surestcraft.com")) is False
 
+    assert (_secondstohuman(40) == '40 seconds')
     assert (_secondstohuman(36986) == '10.27 hours')
-    assert (3698 // 3600) == 1
+
 
     mydict = {"obfuscated": True, "underlined": True, "bold": True,
               "italic": True, "color": "white", "text": "hello",
