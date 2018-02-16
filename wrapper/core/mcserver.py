@@ -15,6 +15,8 @@ from api.base import API
 from api.world import World
 from api.player import Player
 
+import utils.monitoring
+
 import time
 import threading
 import subprocess
@@ -24,12 +26,6 @@ import ctypes
 import platform
 import base64
 import copy
-import re
-
-try:
-    import resource
-except ImportError:
-    resource = False
 
 OFF = 0  # this is the start mode.
 STARTING = 1
@@ -622,37 +618,15 @@ class MCServer(object):
         self.vitals.operator_list = self.read_ops_file(read_super_ops)
 
     def getmemoryusage(self):
-        """Returns allocated memory in bytes. This command
-        currently only works for *NIX based systems.
-        """
-        if not resource or not os.name == "posix":
-            raise OSError(
-                "Your current OS (%s) does not support"
-                " this command at this time." % os.name)
         if self.proc is None:
             self.log.debug("There is no running server to getmemoryusage().")
             return 0
-        try:
-            with open("/proc/%d/statm" % self.proc.pid) as f:
-                getbytes = int(f.read().split(" ")[1]) * resource.getpagesize()
-            return getbytes
-        except Exception as e:
-            raise e
+        result = utils.monitoring.get_memory_usage(self.proc.pid)
+        return result['rss'] * 1024;
 
     @staticmethod
     def getstorageavailable(folder):
-        """Returns the disk space for the working directory
-        in bytes.
-        """
-        if platform.system() == "Windows":
-            free_bytes = ctypes.c_ulonglong(0)
-            ctypes.windll.kernel32.GetDiskFreeSpaceExW(
-                ctypes.c_wchar_p(folder), None, None,
-                ctypes.pointer(free_bytes))
-            return free_bytes.value
-        else:
-            st = os.statvfs(folder)
-            return st.f_bavail * st.f_frsize
+        return utils.monitoring.get_storage_available(folder)
 
     @staticmethod
     def stripspecial(text):
